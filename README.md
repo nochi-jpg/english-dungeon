@@ -11,6 +11,7 @@
 - 全6ステージ。ラスボスをたおせばクリア
 - ノーマルをクリアするとハードが解禁（敵のHP・ダメージ1.5倍、問題のレベルが1つ上がる、ラスボスが「剣聖クロガネ」に変わる）
 - ハイスコア（モードごとに上位5件）とオートセーブ（途中でやめても「つづきから」で再開）はブラウザのlocalStorageに保存
+- 画面右上の「はやさ x1/x2」で戦闘のエフェクトを2倍速にできる（問題の制限時間は変わらない）
 
 | コマンド | 解禁 | 問題のレベル | 効果 |
 |---|---|---|---|
@@ -41,11 +42,12 @@
 - `index.html` 画面とスタイル／`game.js` ゲーム本体／`questions.js` 問題／`se.js` 効果音（base64）／`bgm.js` チップチューンBGM
 - `images/enemy/` 敵（[manabi-dragon](https://github.com/nochi-jpg/manabi-dragon) のボス絵）／`images/bg/` 背景（同）／`images/logo.png` タイトルロゴ
 - `tools/build_questions.py` manabi-resource の `dist/questions.json` から `questions.js` を作りなおす
+- `tools/build_single.py` 画像・JSをぜんぶ埋めこんだ配布用の1ファイル `dist/english-dungeon.html` を作る（HTML直配布用、約5MB。画像はWebP）
 
 ## クレジット
 
 - 問題：[まなび4択問題データベース](https://nochi-jpg.github.io/manabi-resource/)（nochi-jpg/manabi-resource）の英語
 - 敵・背景の絵、タイトルロゴ：K.nom
 - 効果音：効果音ラボ（素材そのものの再配布は禁止。ゲームにうめこんで使用。過去作 nochi-jpg/rakugaki から）
-- BGM：オリジナルのチップチューン（エンジンと title/battle/win/lose は nochi-jpg/rakugaki、boss はこの作品で追加）
+- BGM：オリジナルのチップチューン。エンジンと曲は nochi-jpg/rakugaki から（タイトル＝home、ステージ1＝shop、2＝solve、3＝watch、4＝solveのテンポ上げ、5＝watchのテンポ上げ、勝ち・負け）。ラスボス曲だけこの作品で追加
 - フォント：DotGothic16（Google Fonts。ネットがないときは端末のゴシックで表示）

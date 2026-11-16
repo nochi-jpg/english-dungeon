@@ -1,5 +1,5 @@
 // ===== BGM（チップチューン）：譜面データを その場で 鳴らす。音声ファイルは 使わない =====
-// エンジンと title / battle / win / lose の 曲は 過去作 nochi-jpg/rakugaki（js/bgm.js）から。boss は この作品で 書きたし。曲は ぜんぶ オリジナル
+// エンジンと title / battle1〜5 / win / lose の 曲は 過去作 nochi-jpg/rakugaki（js/bgm.js）から。boss だけ この作品で 書いた。曲は ぜんぶ オリジナル
 // 譜面の 書き方（MML）：
 //   c d e f g a b＝ドレミ…、+ / -＝半音 上/下、r＝やすみ、数字＝長さ（4＝4分、8＝8分、16＝16分、2＝2分、1＝全）、.＝ふてん
 //   o4＝オクターブ、> <＝オクターブを 上/下、l8＝数字を はぶいたときの 長さ、v0〜15＝音量、@0〜3＝音色（矩形波の 細さ 12.5/25/50/75%）
@@ -13,17 +13,29 @@
   const D8 = 'k h s h k h s h', D8b = 'k h s h k k s h';
 
   C.TRACKS = {
-    // タイトル：あかるい マーチ（ハ長調）
-    title: { t: 150, lead: ['@2 v12 o5 l8', bars('c e g >c <b g e g', 'a4 f a g4. e', 'f a >c f e c <a >c', 'd2 <b4 g4', 'c e g >c <b g e g', 'a4 f a g4. >c', 'd c <b a g a b >d', 'c2. r4<')],
-      sub: ['@1 v7 o4 l8', bars(x8('e', 'g'), x4('f', 'a') + ' ' + x4('e', 'g'), x8('f', 'a'), x8('d', 'g'), x8('e', 'g'), x4('f', 'a') + ' ' + x4('e', 'g'), x8('d', 'g'), x8('e', 'g'))],
-      bass: ['v12 o3 l8', bars(b4('c', 'g'), 'f4 c4 c4 g4', b4('f', 'c'), b4('g', 'd'), b4('c', 'g'), 'f4 c4 c4 g4', b4('g', 'd'), 'c4 g4 c4 r4')],
-      drum: ['v9 l8', bars(D8, D8, D8, D8b, D8, D8, D8b, 'k h s h k4 s4')] },
-    // たたかい（イ短調）
-    battle: { t: 172, lead: ['@2 v12 o5 l8', bars('a4 >c< a e a >c e<', 'g4 b g d g b >d<', 'f4 a f c f a >c<', 'e4 g+ b >e4< b g+', '>c< b a b >c d e c<', '>d c< b >c d e f d<', '>e d c< b >c< b a g+', 'a2 r e a >c<')],
+    // ---- 過去作 nochi-jpg/rakugaki の曲（タイトル＝home、たたかい＝shop / solve / watch。ステージごとに変える）
+    // タイトル：のんびりした まちの 曲（ト長調）
+    title: { t: 116, lead: ['@2 v11 o5 l8', bars('d4 g a b4 a g', 'e4 g4 d2', 'c4 e g a4 g e', 'd2. r4', 'd4 g a b4 >d <b', '>e4 d <b a4 g4', 'e g f+ e d4 f+4', 'g2. r4')],
+      sub: ['@1 v6 o4 l8', bars(x8('g', 'b'), x4('e', 'g') + ' ' + x4('g', 'b'), x8('e', 'g'), x8('f+', 'a'), x8('g', 'b'), x4('e', 'g') + ' ' + x4('f+', 'a'), x4('e', 'a') + ' ' + x4('f+', 'a'), x8('g', 'b'))],
+      bass: ['v12 o3 l8', bars(b4('g', 'd'), 'c4 g4 g4 d4', b4('c', 'g'), b4('d', 'a'), b4('g', 'd'), 'c4 g4 d4 a4', 'a4 e4 d4 a4', 'g4 d4 g4 r4')],
+      drum: ['v7 l8', bars('k4 h4 s4 h4', 'k4 h4 s4 h4', 'k4 h4 s4 h4', 'k4 h4 s4 h h', 'k4 h4 s4 h4', 'k4 h4 s4 h4', 'k4 h4 s4 h4', 'k4 h4 s4 r4')] },
+    // ステージ1：はずむ 曲（ヘ長調）
+    battle1: { t: 132, lead: ['@2 v11 o5 l8', bars('c f a f >c4< a4', 'b- >d< b- g a4 f4', 'g b- g e f a >c< a', 'g2 r c e g', 'c f a f >c4< a4', 'b- >d f d< b-4 >d4<', '>c< a f a g e c e', 'f2. r4')],
+      sub: ['@1 v7 o4 l8', bars(x8('r', 'a'), x4('r', 'b-') + ' ' + x4('r', 'a'), x4('r', 'g') + ' ' + x4('r', 'a'), x8('r', 'g'), x8('r', 'a'), x8('r', 'b-'), x4('r', 'a') + ' ' + x4('r', 'g'), x8('r', 'a'))],
+      bass: ['v12 o3 l8', bars(b4('f', 'c'), 'b-4 f4 f4 c4', 'c4 g4 f4 c4', b4('c', 'g'), b4('f', 'c'), b4('b-', 'f'), 'f4 c4 c4 g4', 'f4 c4 f4 r4')],
+      drum: ['v8 l8', bars(D8b, D8b, D8b, 'k h s h k h s s', D8b, D8b, D8b, 'k h s h k4 s4')] },
+    // ステージ2：はやめで 集中する 曲（ニ短調）
+    battle2: { t: 156, lead: ['@1 v11 o5 l8', bars('d f a f d f a >d<', 'c e g e c e g >c<', 'b- >d< b- g b- >d f d<', 'a4 a a a4 r4', 'd f a f d f a >d<', 'e g >c< g e g >c e<', 'f e d c+ d e f g', 'a2 r4 a a')],
+      sub: ['@0 v6 o4 l8', bars(x8('f', 'a'), x8('e', 'g'), x8('d', 'f'), x8('c+', 'e'), x8('f', 'a'), x8('e', 'g'), x8('f', 'a'), x8('c+', 'e'))],
+      bass: ['v12 o3 l8', bars('d d r d d r d d', 'c c r c c r c c', '<b- b- r b- b- r b- b->', '<a a r a a r a a>', 'd d r d d r d d', 'c c r c c r c c', 'd d r d d r d d', '<a a r a a r a a>')],
+      drum: ['v8 l8', bars(D8, D8, D8, 'k h s h k h s s', D8, D8, D8, 'k h s h k s s s')] },
+    // ステージ3：たたかいの 曲（イ短調）
+    battle3: { t: 172, lead: ['@2 v12 o5 l8', bars('a4 >c< a e a >c e<', 'g4 b g d g b >d<', 'f4 a f c f a >c<', 'e4 g+ b >e4< b g+', '>c< b a b >c d e c<', '>d c< b >c d e f d<', '>e d c< b >c< b a g+', 'a2 r e a >c<')],
       sub: ['@1 v7 o4 l16', bars(x8('c e', 'a e'), x8('d g', 'b g'), x8('c f', 'a f'), x8('e g+', 'b g+'), x8('c e', 'a e'), x8('d f', 'a f'), x8('e g+', 'b g+'), x8('c e', 'a e'))],
       bass: ['v12 o2 l8', bars(oct('a'), oct('g'), oct('f'), oct('e'), oct('a'), oct('d'), oct('e'), oct('a'))],
       drum: ['v9 l8', bars(D8b, D8b, D8b, 'k h s h k s s s', D8b, D8b, D8b, 'k h s h k k s s')] },
-    // ボス：はやくて おもい（ニ短調）
+    // ステージ4・5：上の曲の テンポを 上げたもの（TRACKS を 作ったあとで 足す）
+    // ステージ6（ラスボス）：はやくて おもい（ニ短調）。この作品で 書いた曲
     boss: { t: 180, lead: ['@2 v12 o5 l8', bars('d d r d f4 e d', 'c c r c e4 d c', 'b- b- r b- >d4 c< b-', 'a4 g+4 a4 r4', 'd f a >d< a f d f', 'c e g >c< g e c e', 'b- >d f< b- a c+ e g', 'a2 a4 r4')],
       sub: ['@1 v7 o4 l8', bars(x8('d', 'f'), x8('c', 'e'), x8('b-', 'd'), x8('a', 'c+'), x8('d', 'f'), x8('c', 'e'), x8('b-', 'd'), x8('a', 'c+'))],
       bass: ['v12 o2 l8', bars(oct('d'), oct('c'), oct('b-'), oct('a'), oct('d'), oct('c'), oct('b-'), 'a a a a a4 a4')],
@@ -43,6 +55,8 @@
       bass: ['v11 o3 l8', bars('a1', 'g1', 'f1', 'a1')],
       drum: ['v0 l1', bars('r', 'r', 'r', 'r')] },
   };
+  C.TRACKS.battle4 = Object.assign({}, C.TRACKS.battle2, { t: 184 });
+  C.TRACKS.battle5 = Object.assign({}, C.TRACKS.battle3, { t: 196 });
 
   // ---- 譜面を 読む：かえり値 {ev:[{t（ティック）, d（長さ）, n（音の高さ・ドラムは 'k' など）, v, w（音色）}], len}。4分音符＝48ティック ----
   const SEMI = { c: 0, d: 2, e: 4, f: 5, g: 7, a: 9, b: 11 };

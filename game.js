@@ -4,7 +4,10 @@
 (function () {
   'use strict';
   const $ = id => document.getElementById(id);
-  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  // 戦闘速度（1＝ふつう、2＝2倍。エフェクトの待ち時間と アニメだけ 早送り。問題の制限時間は そのまま）
+  const SPD = { mul: 1 };
+  try { if (localStorage.getItem('ed_spd') === '2') SPD.mul = 2; } catch (e) { }
+  const sleep = ms => new Promise(r => setTimeout(r, ms / SPD.mul));
   const rnd = n => Math.floor(Math.random() * n);
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
@@ -99,9 +102,11 @@
   function refreshSndBtn() {
     $('bBgm').textContent = 'BGM ' + (SND.bgm ? 'ON' : 'OFF'); $('bBgm').classList.toggle('off', !SND.bgm);
     $('bSe').textContent = 'SE ' + (SND.se ? 'ON' : 'OFF'); $('bSe').classList.toggle('off', !SND.se);
+    $('bSpd').textContent = 'はやさ x' + SPD.mul; $('bSpd').classList.toggle('fast', SPD.mul === 2);
   }
   $('bBgm').onclick = () => { SND.bgm = !SND.bgm; saveSnd(); refreshSndBtn(); if (SND.bgm) { const k = wantBgm; wantBgm = null; bgm(k); } else ED.chip.stop(); };
   $('bSe').onclick = () => { SND.se = !SND.se; saveSnd(); refreshSndBtn(); se('tap'); };
+  $('bSpd').onclick = () => { SPD.mul = SPD.mul === 1 ? 2 : 1; try { localStorage.setItem('ed_spd', String(SPD.mul)); } catch (e) { } refreshSndBtn(); se('tap'); };
   // さいしょのタップで鳴らしはじめる
   addEventListener('pointerdown', () => { if (wantBgm && SND.bgm && ED.chip && ED.chip.playing !== wantBgm) setTimeout(() => bgm(wantBgm), 50); }, true);
 
@@ -169,15 +174,20 @@
 
   // ---------- 演出 ----------
   const scene = $('scene'), enemy = $('enemy'), fx = $('fx');
-  function anim(el, cls, ms) { el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); setTimeout(() => el.classList.remove(cls), ms); }
+  function anim(el, cls, ms) {
+    const real = ms / SPD.mul;
+    el.classList.remove(cls); void el.offsetWidth; el.style.animationDuration = real + 'ms'; el.classList.add(cls);
+    setTimeout(() => { el.classList.remove(cls); el.style.animationDuration = ''; }, real);
+  }
+  function fxDur(el, ms) { el.style.animationDuration = (ms / SPD.mul) + 'ms'; return ms / SPD.mul; }
   const cam = (cls, ms) => anim(scene, cls, ms);
   const flash = (id, ms) => anim($(id), 'go', ms);
   function slash(deg, gold, dx, dy) {
     const d = document.createElement('div'); d.className = 'slash' + (gold ? ' gold' : ''); d.style.setProperty('--r', deg + 'deg');
-    d.style.left = (640 + (dx || 0)) + 'px'; d.style.top = (300 + (dy || 0)) + 'px'; fx.appendChild(d); setTimeout(() => d.remove(), 500);
+    d.style.left = (640 + (dx || 0)) + 'px'; d.style.top = (300 + (dy || 0)) + 'px'; fxDur(d, 380); fx.appendChild(d); setTimeout(() => d.remove(), 500 / SPD.mul);
   }
-  function popDmg(txt, x, y, cls) { const d = document.createElement('div'); d.className = 'dmg ' + (cls || ''); d.textContent = txt; d.style.left = x + 'px'; d.style.top = y + 'px'; fx.appendChild(d); setTimeout(() => d.remove(), 1100); }
-  function sparks(n) { for (let i = 0; i < n; i++) { const s = document.createElement('div'); s.className = 'spark'; s.style.left = (300 + rnd(680)) + 'px'; s.style.top = (380 + rnd(140)) + 'px'; s.style.animationDelay = (rnd(40) * 10) + 'ms'; fx.appendChild(s); setTimeout(() => s.remove(), 1600); } }
+  function popDmg(txt, x, y, cls) { const d = document.createElement('div'); d.className = 'dmg ' + (cls || ''); d.textContent = txt; d.style.left = x + 'px'; d.style.top = y + 'px'; fxDur(d, 1000); fx.appendChild(d); setTimeout(() => d.remove(), 1100 / SPD.mul); }
+  function sparks(n) { for (let i = 0; i < n; i++) { const s = document.createElement('div'); s.className = 'spark'; s.style.left = (300 + rnd(680)) + 'px'; s.style.top = (380 + rnd(140)) + 'px'; s.style.animationDelay = (rnd(40) * 10 / SPD.mul) + 'ms'; fxDur(s, 1100); fx.appendChild(s); setTimeout(() => s.remove(), 1600 / SPD.mul); } }
   function enemyHit() { anim(enemy, 'hit', 480); }
 
   // ---------- ゲームの状態 ----------
@@ -316,7 +326,7 @@
     if (resume) { G.ehp = clamp(resume.ehp, 1, G.emax); G.actIdx = resume.actIdx || 0; G.guard = !!resume.guard; }
     $('bg').style.backgroundImage = `url(${e.bg})`; $('bg').classList.remove('dark');
     enemy.className = 'hide'; enemy.src = e.img; $('ename').textContent = e.name; drawHP(); drawCmds(); cmdsOn(false); clearMsg();
-    bgm(e.boss ? 'boss' : 'battle');
+    bgm(e.boss ? 'boss' : 'battle' + (G.stage + 1));
     await sleep(500);
     // ドラクエ風：チラチラして あらわれる
     for (let i = 0; i < 4; i++) { enemy.className = 'show'; await sleep(70); enemy.className = 'hide'; await sleep(70); }
@@ -399,7 +409,12 @@
   $('howPrev').onclick = () => { howPage--; drawHow(); se('tap'); }; $('howNext').onclick = () => { howPage++; drawHow(); se('tap'); };
   $('howBack').onclick = () => { sub(null); se('tap'); }; $('hsBack').onclick = () => { sub(null); se('tap'); };
   function drawHS() {
-    const mk = (mode, label) => { const l = hsList(mode); let h = `<div class="hs t">${label}</div><div class="hs h"><span></span><span>なまえ</span><span class="r">スコア</span></div>`; for (let i = 0; i < 5; i++) { const r = l[i]; h += `<div class="hs"><span>${i + 1}.</span><span>${r ? r.n + `　<small style="color:#9cf">ST${r.st}</small>` : '－－－'}</span><span class="r">${r ? r.s : '－'}</span></div>`; } return h; };
+    const mk = (mode, label) => {
+      const l = hsList(mode);
+      let h = `<div class="hs t">${label}</div><div class="hs h"><span></span><span>なまえ</span><span class="c">ステージ</span><span class="r">スコア</span></div>`;
+      for (let i = 0; i < 5; i++) { const r = l[i]; h += `<div class="hs${i === 0 && r ? ' rk1' : ''}"><span class="r">${i + 1}.</span><span>${r ? r.n : '－－－'}</span><span class="c">${r ? r.st + '/6' : '－'}</span><span class="r">${r ? r.s : '－'}</span></div>`; }
+      return h;
+    };
     $('hsN').innerHTML = mk('normal', 'ノーマル'); $('hsH').innerHTML = mk('hard', 'ハード');
   }
 

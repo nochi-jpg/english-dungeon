@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>英単語ダンジョン</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;height:100%;background:#000;overflow:hidden;color:#fff;font-family:'DotGothic16','MS Gothic','Yu Gothic',monospace;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+button{font-family:inherit;color:inherit}
+#wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#000}
+#stage{position:relative;width:1280px;height:720px;overflow:hidden;background:#000;transform-origin:center center;flex:none}
+#scene{position:absolute;inset:0;overflow:hidden;animation:camIdle 9s ease-in-out infinite;transform-origin:50% 60%}
+#scene.lunge{animation:camLunge .55s ease-out}
+#scene.shake{animation:camShake .5s linear}
+#scene.zoom{animation:camZoom 1.1s ease-in-out}
+#bg{position:absolute;left:-60px;top:-50px;width:1400px;height:820px;background-size:cover;background-position:center;transition:opacity .6s}
+#bg.dark{filter:brightness(.35) saturate(.6)}
+#enemyBox{position:absolute;left:340px;top:84px;width:600px;height:440px;display:flex;align-items:flex-end;justify-content:center}
+#enemy{height:420px;width:auto;animation:breath 3.2s ease-in-out infinite;transform-origin:50% 100%;filter:drop-shadow(0 18px 14px rgba(0,0,0,.6));opacity:0}
+#enemy.show{opacity:1}
+#enemy.hit{animation:ehit .45s linear}
+#enemy.lunge{animation:elunge .9s cubic-bezier(.4,0,.2,1)}
+#enemy.heal{animation:eheal 1s ease-in-out}
+#enemy.idleact{animation:eidle .9s ease-in-out}
+#enemy.charge{animation:echarge 1s ease-in-out}
+#enemy.die{animation:edie 1.3s ease-in forwards}
+#enemy.hide{opacity:0}
+.flashw{position:absolute;inset:0;pointer-events:none;opacity:0}
+#flash{background:#fff}
+#flash.go{animation:flash .35s}
+#red{background:radial-gradient(ellipse at center,rgba(255,0,0,0) 40%,rgba(255,0,0,.75) 100%)}
+#red.go{animation:flash .55s}
+#green{background:radial-gradient(ellipse at center,rgba(60,255,120,.35) 0%,rgba(0,0,0,0) 70%)}
+#green.go{animation:flash .9s}
+#dark{background:rgba(0,0,0,.6);transition:opacity .3s}
+#dark.on{opacity:1}
+#fx{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.slash{position:absolute;left:640px;top:300px;width:560px;height:16px;border-radius:8px;transform-origin:50% 50%;
+ background:linear-gradient(90deg,rgba(255,255,255,0),#fff 30%,#bfe6ff 50%,#fff 70%,rgba(255,255,255,0));box-shadow:0 0 18px 6px rgba(160,220,255,.8);animation:slash .38s ease-out forwards}
+.slash.gold{background:linear-gradient(90deg,rgba(255,255,255,0),#fff 30%,#ffe066 50%,#fff 70%,rgba(255,255,255,0));box-shadow:0 0 24px 8px rgba(255,210,80,.9)}
+.dmg{position:absolute;font-size:52px;font-weight:bold;color:#fff;text-shadow:3px 3px 0 #000,-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000;animation:dmg 1s ease-out forwards;white-space:nowrap;transform:translate(-50%,0)}
+.dmg.heal{color:#8f8}.dmg.me{color:#f66}.dmg.ult{color:#ffd54a;font-size:64px}.dmg.zero{color:#aaa;font-size:36px}
+.spark{position:absolute;width:10px;height:10px;border-radius:50%;background:#9f9;box-shadow:0 0 10px 3px #6f6;animation:spark 1.1s ease-out forwards}
+#sword{position:absolute;right:-80px;bottom:-260px;width:520px;height:620px;transform-origin:90% 95%;transform:rotate(70deg) translateY(120px);opacity:0;pointer-events:none;filter:drop-shadow(0 0 10px rgba(255,255,255,.5))}
+#sword.swing{animation:swing .45s ease-in-out forwards}
+#sword.ult{animation:swingUlt .5s ease-in-out forwards;filter:drop-shadow(0 0 16px rgba(255,220,100,.9))}
+#shield{position:absolute;left:640px;bottom:-320px;width:300px;height:360px;transform:translateX(-50%);opacity:0;pointer-events:none}
+#shield.up{animation:shieldUp 1.2s ease-out forwards}
+
+/* ドラクエ風ウインドウ */
+.win{position:absolute;background:rgba(0,0,8,.93);border:4px solid #fff;border-radius:10px;box-shadow:inset 0 0 0 3px #000,inset 0 0 0 5px #fff,0 4px 10px rgba(0,0,0,.6);box-sizing:border-box;padding:14px 18px}
+.lbl{font-size:22px;letter-spacing:1px}
+.gauge{height:18px;border:2px solid #fff;background:#222;box-sizing:border-box;margin-top:6px}
+.gauge i{display:block;height:100%;background:#4c4;transition:width .35s}
+.gauge i.mid{background:#ec4}.gauge i.low{background:#e44}
+#pwin{left:20px;top:20px;width:320px;height:100px}
+#pwin.shake{animation:winShake .4s linear}
+#ewin{left:440px;top:20px;width:400px;height:88px}
+#swin{left:940px;top:20px;width:320px;height:100px}
+.row{display:flex;justify-content:space-between;align-items:baseline;height:30px}
+.num{font-size:24px}
+#cwin{left:20px;top:520px;width:470px;height:180px;padding:10px 14px}
+#mwin{left:505px;top:520px;width:755px;height:180px;padding:16px 20px}
+#msg{font-size:25px;line-height:44px;height:132px;overflow:hidden;white-space:pre-wrap;word-break:break-all}
+#msg .en{color:#9cf}
+#next{position:absolute;right:24px;bottom:10px;font-size:24px;animation:blink .8s steps(2) infinite;display:none}
+.cmds{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(3,50px);column-gap:8px;row-gap:1px}
+.cmd{display:flex;align-items:center;height:50px;padding:0 6px;font-size:24px;line-height:26px;cursor:pointer;background:transparent;border:0;text-align:left;border-radius:6px;white-space:nowrap}
+.cmd span{display:flex;flex-direction:column}
+.cmd::before{content:'▶';width:30px;flex:none;opacity:0;font-size:20px}
+.cmd:hover::before,.cmd.sel::before{opacity:1}
+.cmd:hover{background:rgba(255,255,255,.08)}
+.cmd small{font-size:13px;line-height:16px;color:#9cf;letter-spacing:0}
+.cmd.lock{color:#666;cursor:default}.cmd.lock small{color:#666}.cmd.lock:hover{background:none}.cmd.lock:hover::before{opacity:0}
+.cmd.glow{text-shadow:0 0 10px #ffd54a,0 0 18px #ffb300;color:#fff6cc}
+#cwin.off .cmd{color:#777;pointer-events:none}#cwin.off .cmd small{color:#777}#cwin.off .cmd.glow{text-shadow:none;color:#777}
+
+/* クイズ */
+#qwin{left:20px;top:372px;width:1240px;height:328px;padding:14px 22px;display:none}
+#qwin.on{display:block}
+#tbar{display:flex;align-items:center;gap:14px;height:34px}
+#tnum{font-size:30px;width:70px;text-align:right;flex:none}
+#tnum.hot{color:#f66}
+#tgauge{flex:1;height:18px;border:2px solid #fff;background:#222;box-sizing:border-box}
+#tgauge i{display:block;height:100%;width:100%;background:#4af}
+#tgauge i.hot{background:#f55}
+#qlv{font-size:20px;color:#9cf;width:150px;text-align:right;flex:none}
+#qtext{height:70px;display:flex;align-items:center;justify-content:center;font-size:36px;text-align:center;margin-top:6px}
+.chs{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:76px 76px;column-gap:16px;row-gap:6px;margin-top:10px}
+.ch{display:flex;align-items:center;height:76px;padding:0 14px;font-size:32px;background:rgba(255,255,255,.04);border:2px solid rgba(255,255,255,.25);border-radius:8px;cursor:pointer;text-align:left;overflow:hidden;white-space:nowrap}
+.ch::before{content:'▶';width:34px;flex:none;opacity:0;font-size:22px}
+.ch:hover{background:rgba(255,255,255,.14);border-color:#fff}.ch:hover::before{opacity:1}
+.ch.ok{background:rgba(80,220,120,.35);border-color:#8f8}.ch.ng{background:rgba(220,80,80,.35);border-color:#f88}
+.ch.done{pointer-events:none}
+
+/* タイトル・リザルトなどの画面 */
+.page{position:absolute;inset:0;display:none}
+.page.on{display:block}
+#title .bgimg,#result .bgimg{position:absolute;inset:0;background-size:cover;background-position:center}
+#logo{position:absolute;left:0;right:0;top:36px;text-align:center}
+#logo img{height:250px;width:auto;filter:drop-shadow(0 6px 0 rgba(0,0,0,.45))}
+#logo .t1{font-size:34px;letter-spacing:6px;color:#dfe;text-shadow:2px 2px 0 #000}
+#logo .t2{font-size:92px;letter-spacing:8px;color:#fff;text-shadow:4px 4px 0 #000,0 0 24px rgba(120,180,255,.8);line-height:110px}
+#logo .t3{font-size:26px;letter-spacing:3px;color:#ffe9a0;text-shadow:2px 2px 0 #000}
+#menu{left:420px;top:336px;width:440px;height:336px;padding:14px 24px}
+.mi.lock{color:#666;cursor:default}.mi.lock small{color:#666}.mi.lock:hover{background:none}.mi.lock:hover::before{opacity:0}
+.mi.cont{color:#ffe9a0}
+.mi{display:flex;align-items:center;height:60px;font-size:30px;padding:0 10px;background:transparent;border:0;width:100%;cursor:pointer;text-align:left;border-radius:6px}
+.mi::before{content:'▶';width:36px;flex:none;opacity:0;font-size:22px}
+.mi:hover::before{opacity:1}.mi:hover{background:rgba(255,255,255,.08)}
+.mi small{margin-left:auto;font-size:16px;color:#9cf;white-space:nowrap}
+#tcredit{position:absolute;left:0;right:0;bottom:16px;text-align:center;font-size:16px;color:#ccc;text-shadow:1px 1px 0 #000}
+#howto,#hiscore{left:140px;top:40px;width:1000px;height:640px;padding:22px 30px}
+.ph{font-size:34px;height:50px;display:flex;align-items:center;justify-content:space-between}
+.ph small{font-size:18px;color:#9cf}
+.hrow{display:grid;grid-template-columns:190px 160px 1fr;align-items:center;height:70px;font-size:23px;line-height:1.3;border-bottom:1px solid rgba(255,255,255,.2)}
+.hrow .en{color:#9cf;font-size:18px}
+.hrow.h{height:44px;font-size:20px;color:#9cf;border-bottom:2px solid #fff}
+.hcol{display:grid;grid-template-columns:1fr 1fr;column-gap:30px;margin-top:10px}
+.hs{display:grid;grid-template-columns:50px 1fr 150px;align-items:center;height:54px;font-size:24px;border-bottom:1px solid rgba(255,255,255,.2)}
+.hs.h{font-size:20px;color:#9cf;height:40px;border-bottom:2px solid #fff}
+.hs.t{display:block;font-size:28px;height:50px;line-height:50px;border-bottom:0;color:#fff}
+.hs .r{text-align:right}
+.hs.new{color:#ffd54a}
+.btns{position:absolute;left:30px;right:30px;bottom:20px;display:flex;justify-content:center;gap:20px}
+.btn{height:56px;min-width:220px;padding:0 24px;font-size:26px;background:rgba(0,0,8,.93);border:3px solid #fff;border-radius:8px;cursor:pointer;box-shadow:inset 0 0 0 2px #000,inset 0 0 0 4px #fff}
+.btn:hover{background:#224}
+.btn:disabled{color:#777;cursor:default}
+#rwin{left:290px;top:80px;width:700px;height:560px;padding:22px 30px}
+#rtitle{font-size:48px;text-align:center;height:70px;line-height:70px;letter-spacing:6px}
+#rtitle.lose{color:#f88}#rtitle.clear{color:#ffd54a}
+.rrow{display:flex;justify-content:space-between;align-items:center;height:48px;font-size:26px;border-bottom:1px solid rgba(255,255,255,.2)}
+.rrow.total{font-size:34px;border-bottom:0;height:64px;color:#ffd54a}
+#nameRow{display:flex;align-items:center;gap:14px;height:64px;font-size:24px;margin-top:6px}
+#nameRow input{font-family:inherit;font-size:28px;height:48px;width:300px;background:#000;color:#fff;border:3px solid #fff;border-radius:6px;padding:0 12px;box-sizing:border-box}
+#nameRow .note{color:#ffd54a}
+#rotate{position:fixed;inset:0;background:#000;display:none;align-items:center;justify-content:center;font-size:20px;text-align:center;z-index:9;line-height:1.8}
+#sbtn{position:absolute;left:940px;top:128px;width:320px;height:36px;display:flex;justify-content:flex-end;gap:8px}
+#sbtn button{height:36px;width:120px;font-size:18px;background:rgba(0,0,8,.8);border:2px solid #fff;border-radius:6px;cursor:pointer}
+#sbtn button.off{color:#888;border-color:#888}
+
+@keyframes camIdle{0%,100%{transform:scale(1) translate(0,0)}50%{transform:scale(1.025) translate(6px,-4px)}}
+@keyframes camLunge{0%{transform:scale(1)}35%{transform:scale(1.14) translateY(-14px)}70%{transform:scale(1.04)}100%{transform:scale(1)}}
+@keyframes camShake{0%{transform:translate(0,0)}15%{transform:translate(-16px,8px)}30%{transform:translate(14px,-10px)}45%{transform:translate(-10px,6px)}60%{transform:translate(8px,-4px)}80%{transform:translate(-4px,2px)}100%{transform:translate(0,0)}}
+@keyframes camZoom{0%{transform:scale(1)}50%{transform:scale(1.22) translateY(-20px)}100%{transform:scale(1)}}
+@keyframes breath{0%,100%{transform:translateY(0) scaleY(1)}50%{transform:translateY(-6px) scaleY(1.012)}}
+@keyframes ehit{0%{filter:brightness(6) drop-shadow(0 18px 14px rgba(0,0,0,.6));transform:translateX(0)}20%{transform:translateX(-22px)}40%{filter:brightness(1) drop-shadow(0 18px 14px rgba(0,0,0,.6));transform:translateX(18px)}60%{filter:brightness(5) drop-shadow(0 18px 14px rgba(0,0,0,.6));transform:translateX(-10px)}100%{filter:brightness(1) drop-shadow(0 18px 14px rgba(0,0,0,.6));transform:translateX(0)}}
+@keyframes elunge{0%{transform:scale(1) translateY(0)}30%{transform:scale(.96) translateY(-26px)}52%{transform:scale(1.42) translateY(90px)}70%{transform:scale(1.36) translateY(80px)}100%{transform:scale(1) translateY(0)}}
+@keyframes eheal{0%,100%{filter:brightness(1) drop-shadow(0 18px 14px rgba(0,0,0,.6))}50%{filter:brightness(1.6) drop-shadow(0 0 40px rgba(120,255,160,.95))}}
+@keyframes eidle{0%,100%{transform:translateX(0) rotate(0)}25%{transform:translateX(-24px) rotate(-3deg)}75%{transform:translateX(24px) rotate(3deg)}}
+@keyframes echarge{0%,100%{filter:brightness(1) drop-shadow(0 18px 14px rgba(0,0,0,.6));transform:scale(1)}50%{filter:brightness(1.4) drop-shadow(0 0 46px rgba(255,80,80,.95));transform:scale(1.06)}}
+@keyframes edie{0%{opacity:1;filter:brightness(1)}20%{filter:brightness(6)}100%{opacity:0;filter:brightness(6) blur(8px);transform:translateY(40px) scaleY(.8)}}
+@keyframes flash{0%{opacity:0}15%{opacity:1}100%{opacity:0}}
+@keyframes slash{0%{opacity:0;transform:translate(-50%,-50%) rotate(var(--r)) scaleX(0)}25%{opacity:1}65%{opacity:1;transform:translate(-50%,-50%) rotate(var(--r)) scaleX(1.05)}100%{opacity:0;transform:translate(-50%,-50%) rotate(var(--r)) scaleX(1.15) translateX(40px)}}
+@keyframes dmg{0%{opacity:0;transform:translate(-50%,20px) scale(.6)}20%{opacity:1;transform:translate(-50%,-10px) scale(1.15)}40%{transform:translate(-50%,0) scale(1)}100%{opacity:0;transform:translate(-50%,-70px) scale(1)}}
+@keyframes spark{0%{opacity:0;transform:translateY(0) scale(.5)}20%{opacity:1}100%{opacity:0;transform:translateY(-240px) scale(1.2)}}
+@keyframes swing{0%{opacity:0;transform:rotate(70deg) translateY(120px)}15%{opacity:1;transform:rotate(60deg) translateY(40px)}55%{opacity:1;transform:rotate(-30deg) translateY(-40px) translateX(-120px)}100%{opacity:0;transform:rotate(-60deg) translateY(-20px) translateX(-220px)}}
+@keyframes swingUlt{0%{opacity:0;transform:rotate(80deg) translateY(140px) scale(1.2)}15%{opacity:1;transform:rotate(65deg) translateY(40px) scale(1.2)}55%{opacity:1;transform:rotate(-40deg) translateY(-60px) translateX(-160px) scale(1.2)}100%{opacity:0;transform:rotate(-70deg) translateY(-40px) translateX(-280px) scale(1.2)}}
+@keyframes shieldUp{0%{opacity:0;transform:translate(-50%,160px)}25%{opacity:1;transform:translate(-50%,0)}80%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,40px)}}
+@keyframes winShake{0%,100%{transform:translate(0,0)}25%{transform:translate(-8px,4px)}50%{transform:translate(8px,-4px)}75%{transform:translate(-5px,2px)}}
+@keyframes blink{0%{opacity:1}100%{opacity:0}}
+</style>
+</head>
+<body>
+<div id="wrap">
+<div id="stage">
+  <!-- バトル画面 -->
+  <div id="battle" class="page">
+    <div id="scene">
+      <div id="bg"></div>
+      <div id="enemyBox"><img id="enemy" alt=""></div>
+      <div id="fx"></div>
+      <svg id="sword" viewBox="0 0 520 620" aria-hidden="true">
+        <defs><linearGradient id="bl" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#e8f4ff"/><stop offset=".5" stop-color="#8fb8e0"/><stop offset="1" stop-color="#ffffff"/></linearGradient></defs>
+        <polygon points="250,0 290,60 290,430 210,430 210,60" fill="url(#bl)" stroke="#223" stroke-width="4"/>
+        <line x1="250" y1="40" x2="250" y2="420" stroke="#fff" stroke-width="6" opacity=".7"/>
+        <rect x="150" y="430" width="200" height="36" rx="10" fill="#c9a227" stroke="#5a3d05" stroke-width="4"/>
+        <rect x="222" y="466" width="56" height="120" rx="12" fill="#5a3d1a" stroke="#2a1a05" stroke-width="4"/>
+        <circle cx="250" cy="600" r="22" fill="#c9a227" stroke="#5a3d05" stroke-width="4"/>
+      </svg>
+      <svg id="shield" viewBox="0 0 300 360" aria-hidden="true">
+        <path d="M150 10 L280 60 C280 200 240 300 150 350 C60 300 20 200 20 60 Z" fill="#3b5a9a" stroke="#dfe8ff" stroke-width="10"/>
+        <path d="M150 50 L240 85 C240 190 215 265 150 305 C85 265 60 190 60 85 Z" fill="#6f8fd1" stroke="#fff" stroke-width="4"/>
+        <path d="M150 90 L150 270 M90 150 L210 150" stroke="#fff" stroke-width="16" stroke-linecap="round"/>
+      </svg>
+      <div id="flash" class="flashw"></div>
+      <div id="red" class="flashw"></div>
+      <div id="green" class="flashw"></div>
+      <div id="dark" class="flashw"></div>
+    </div>
+    <div id="pwin" class="win">
+      <div class="row"><span class="lbl" id="pname">ゆうしゃ</span><span class="num"><span id="php">2000</span><span style="font-size:16px"> /2000</span></span></div>
+      <div class="gauge"><i id="pg" style="width:100%"></i></div>
+    </div>
+    <div id="ewin" class="win">
+      <div class="row"><span class="lbl" id="ename">？？？</span><span class="num" id="ehp">0</span></div>
+      <div class="gauge"><i id="eg" style="width:100%"></i></div>
+    </div>
+    <div id="swin" class="win">
+      <div class="row"><span class="lbl">SCORE</span><span class="num" id="score">0</span></div>
+      <div class="row"><span class="lbl" id="mode">NORMAL</span><span class="num" id="stg">STAGE 1/6</span></div>
+    </div>
+    <div id="sbtn"><button id="bBgm">BGM ON</button><button id="bSe">SE ON</button></div>
+    <div id="cwin" class="win"><div class="cmds" id="cmds"></div></div>
+    <div id="mwin" class="win"><div id="msg"></div><div id="next">▼</div></div>
+    <div id="qwin" class="win">
+      <div id="tbar"><span id="tnum">20</span><div id="tgauge"><i id="tg"></i></div><span id="qlv">レベル1</span></div>
+      <div id="qtext"></div>
+      <div class="chs" id="chs"></div>
+    </div>
+  </div>
+
+  <!-- タイトル -->
+  <div id="title" class="page">
+    <div class="bgimg" id="tbg"></div>
+    <div id="logo"><img src="images/logo.png" alt="英単語ダンジョン"><div class="t3">― 英単語で モンスターを たおせ ―</div></div>
+    <div id="menu" class="win">
+      <button class="mi cont" data-go="continue" id="miCont">つづきから<small>CONTINUE</small></button>
+      <button class="mi" data-go="normal">ノーマルモード<small>NORMAL</small></button>
+      <button class="mi" data-go="hard">ハードモード<small>HARD</small></button>
+      <button class="mi" data-go="howto">あそびかた<small>HOW TO PLAY</small></button>
+      <button class="mi" data-go="hiscore">ハイスコア<small>HIGH SCORE</small></button>
+    </div>
+    <div id="tcredit">問題：まなび4択問題データベース（小3〜6年の英単語）　効果音：効果音ラボ　BGM：オリジナル　キャラ：K.nom</div>
+    <div id="howto" class="win page">
+      <div class="ph"><span>あそびかた</span><small id="howPage">1/2</small></div>
+      <div id="howBody"></div>
+      <div class="btns"><button class="btn" id="howPrev">◀ まえ</button><button class="btn" id="howNext">つぎ ▶</button><button class="btn" id="howBack">タイトルへ</button></div>
+    </div>
+    <div id="hiscore" class="win page">
+      <div class="ph"><span>ハイスコア</span><small>ブラウザごとに きろく</small></div>
+      <div class="hcol"><div id="hsN"></div><div id="hsH"></div></div>
+      <div class="btns"><button class="btn" id="hsBack">タイトルへ</button></div>
+    </div>
+  </div>
+
+  <!-- リザルト -->
+  <div id="result" class="page">
+    <div class="bgimg" id="rbg"></div>
+    <div id="rwin" class="win">
+      <div id="rtitle">ゲームクリア！</div>
+      <div id="rrows"></div>
+      <div id="nameRow"><span class="note" id="rankNote">ハイスコア更新！</span><span>なまえ</span><input id="rname" maxlength="10" placeholder="ゆうしゃ"></div>
+      <div class="btns"><button class="btn" id="rSave">きろくする</button><button class="btn" id="rRetry">もういちど</button><button class="btn" id="rTitle">タイトルへ</button></div>
+    </div>
+  </div>
+</div>
+</div>
+<div id="rotate">画面を よこ向きに してください<br>（または ウインドウを 広げてください）</div>
+<script src="questions.js"></script>
+<script src="se.js"></script>
+<script src="bgm.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
